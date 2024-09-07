@@ -89,6 +89,13 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
 
+    // Coil
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
+
+    // Hilt Compose Navigation
+    implementation(libs.androidx.hilt.navigation.compose)
+
     // Compose Navigation
     implementation(libs.navigation.compose)
 

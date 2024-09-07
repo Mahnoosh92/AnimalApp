@@ -4,7 +4,6 @@ import androidx.test.filters.MediumTest
 import app.cash.turbine.test
 import com.example.animalapp.data.db.AnimalDatabase
 import com.example.animalapp.data.model.local.BreedEntity
-import com.example.animalapp.data.model.local.BreedWithImage
 import com.example.animalapp.data.model.local.ImageEntity
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -53,7 +52,7 @@ class BreedDaoTest {
         breedDao.insert(BreedEntity.DEFAULT)
         imageDao.insert(ImageEntity.DEFAULT)
 
-        breedDao.getUsersWithPlaylists().test {
+        breedDao.getBreedsWithImages().test {
             val result = awaitItem()
             assertThat(result[0].breed).isEqualTo(BreedEntity.DEFAULT)
             assertThat(result[0].image).isEqualTo(ImageEntity.DEFAULT)

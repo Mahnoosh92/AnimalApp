@@ -14,6 +14,7 @@ data class BreedEntity(
     @PrimaryKey val id: String,
     @ColumnInfo("name") val name: String?,
     @ColumnInfo(name = "isFavorite") val isFavorite: Boolean = false,
+    @ColumnInfo(name = "isAddedToCart") val isAddedToCart: Boolean = false,
 ) {
     companion object {
         val DEFAULT = BreedEntity(

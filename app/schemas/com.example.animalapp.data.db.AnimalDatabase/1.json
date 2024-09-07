@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b59fabfd46dd8a5082673c39d8cd27ba",
+    "identityHash": "26500e92a082a862547164b0d6f8c614",
     "entities": [
       {
         "tableName": "image_table",
@@ -62,7 +62,7 @@
       },
       {
         "tableName": "breed_table",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`description` TEXT, `id` TEXT NOT NULL, `name` TEXT, `isFavorite` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`description` TEXT, `id` TEXT NOT NULL, `name` TEXT, `isFavorite` INTEGER NOT NULL, `isAddedToCart` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "description",
@@ -87,6 +87,12 @@
             "columnName": "isFavorite",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isAddedToCart",
+            "columnName": "isAddedToCart",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -102,7 +108,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b59fabfd46dd8a5082673c39d8cd27ba')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '26500e92a082a862547164b0d6f8c614')"
     ]
   }
 }

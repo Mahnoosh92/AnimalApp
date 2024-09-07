@@ -1,13 +1,13 @@
-package com.example.animalapp.data.datasource.local
+package com.example.animalapp.domain.repository
 
 import com.example.animalapp.data.model.local.BreedEntity
-import com.example.animalapp.data.model.local.LocalBreedWithImage
 import com.example.animalapp.data.model.local.ImageEntity
+import com.example.animalapp.domain.model.BreedWithImage
 import kotlinx.coroutines.flow.Flow
 
-interface BreedLocalDatasource {
-    fun getBreeds(): Flow<List<LocalBreedWithImage>>
+interface BreedRepository {
+    fun getBreeds(page: Int): Flow<List<BreedWithImage>?>
+    fun searchBreeds(breedName: String): Flow<List<BreedWithImage>?>
     suspend fun insert(breedEntity: BreedEntity, imageEntity: ImageEntity)
     suspend fun remove(breedId: String)
-
 }

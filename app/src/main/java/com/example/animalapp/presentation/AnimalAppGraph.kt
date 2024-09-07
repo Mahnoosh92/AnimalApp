@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import com.example.animalapp.presentation.component.AnimalAppBottomBar
 import com.example.animalapp.presentation.component.AnimalAppTopBar
-import com.example.animalapp.presentation.detail.navigation.DETAIL_ROUTE
 import com.example.animalapp.presentation.detail.navigation.detail
 import com.example.animalapp.presentation.filter.navigation.filter
 import com.example.animalapp.presentation.home.navigation.HOME_ROUTE
@@ -46,9 +45,9 @@ fun AnimalAppGraph(
             startDestination = HOME_ROUTE,
             modifier = modifier.padding(paddings)
         ) {
-            home(){
-                state.navController.navigate(DETAIL_ROUTE)
-            }
+            home(
+                onErrorReceived = {},
+                onItemClicked = {})
             search()
             filter()
             detail()
