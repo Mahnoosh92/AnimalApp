@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName
 data class BreedDTO(
     @SerializedName("description") val description: String?,
     @SerializedName("id") val id: String,
-    @SerializedName("image") val image: ImageDTO,
+    @SerializedName("image") val image: ImageDTO?,
     @SerializedName("name") val name: String?
 ) {
     companion object {

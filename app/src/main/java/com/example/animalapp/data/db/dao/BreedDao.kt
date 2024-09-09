@@ -6,14 +6,13 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.example.animalapp.data.model.local.BreedEntity
-import com.example.animalapp.data.model.local.LocalBreedWithImage
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BreedDao {
     @Transaction
     @Query("SELECT * FROM breed_table")
-    fun getBreedsWithImages(): Flow<List<LocalBreedWithImage>>
+    fun getBreedsWithImages(): Flow<List<BreedEntity>>
 
     @Query("SELECT * FROM breed_table")
     fun getBreeds(): Flow<List<BreedEntity>>
@@ -21,6 +20,15 @@ interface BreedDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(breedEntity: BreedEntity)
 
-    @Query("DELETE FROM breed_table WHERE id = :id")
-    suspend fun remove(id: String)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(breedEntities: List<BreedEntity>)
+
+    @Query("UPDATE breed_table SET isFavorite = :isFavorite WHERE id = :id")
+    suspend fun update(id: String, isFavorite: Int)
+
+    @Query("DELETE FROM breed_table")
+    suspend fun removeAll()
+
+    @Query("DELETE FROM breed_table where id=:id")
+    suspend fun remove(id:String)
 }

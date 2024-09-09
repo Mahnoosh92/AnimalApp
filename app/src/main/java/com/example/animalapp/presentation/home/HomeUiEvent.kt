@@ -1,12 +1,14 @@
 package com.example.animalapp.presentation.home
 
-import com.example.animalapp.domain.model.BreedWithImage
+import com.example.animalapp.domain.model.Breed
+
 
 sealed interface HomeUiEvent {
     object LoadMoreBreeds : HomeUiEvent
-    data class OnAddNumberOfOrdersClicked(val breedWithImage: BreedWithImage) : HomeUiEvent
-    data class OnRemoveNumberOfOrdersClicked(val breedWithImage: BreedWithImage) : HomeUiEvent
-    data class OnAddToCartClicked(val breedWithImage: BreedWithImage) : HomeUiEvent
-    data class OnRemoveFromCartClicked(val breedWithImage: BreedWithImage) : HomeUiEvent
-    data class OnFavouriteClicked(val breedWithImage: BreedWithImage) : HomeUiEvent
+    object SaveChangedBreedsWithImage : HomeUiEvent
+    data class OnAddNumberOfOrdersClicked(val breed: Breed) : HomeUiEvent
+    data class OnRemoveNumberOfOrdersClicked(val breed: Breed) : HomeUiEvent
+    data class OnAddToCartClicked(val breed: Breed) : HomeUiEvent
+    data class OnRemoveFromCartClicked(val breed: Breed) : HomeUiEvent
+    data class OnFavouriteClicked(val breed: Breed) : HomeUiEvent
 }

@@ -1,9 +1,7 @@
 package com.example.animalapp.presentation.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,27 +33,28 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.animalapp.R
+import com.example.animalapp.data.common.UiConstants
 import com.example.animalapp.domain.model.Breed
-import com.example.animalapp.domain.model.BreedWithImage
-import com.example.animalapp.domain.model.Image
 import com.example.animalapp.ui.theme.AnimalAppTheme
 
 @Composable
 fun AnimalItem(
-    breedWithImage: BreedWithImage,
+    breed: Breed,
     modifier: Modifier = Modifier,
-    onItemClicked: (BreedWithImage) -> Unit,
-    onFavoriteClicked: (BreedWithImage) -> Unit,
-    onAddNumberOfOrderClicked: (BreedWithImage) -> Unit,
-    onRemoveNumberOfOrderClicked: (BreedWithImage) -> Unit,
-    onAddToCartClicked: (BreedWithImage) -> Unit,
-    onRemoveFromCartClicked: (BreedWithImage) -> Unit
+    onItemClicked: (Breed) -> Unit,
+    onFavoriteClicked: (Breed) -> Unit,
+    onAddNumberOfOrderClicked: (Breed) -> Unit,
+    onRemoveNumberOfOrderClicked: (Breed) -> Unit,
+    onAddToCartClicked: (Breed) -> Unit,
+    onRemoveFromCartClicked: (Breed) -> Unit
 ) {
     Card(
         modifier =
         modifier
             .padding(8.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .testTag(UiConstants.UiTags.BreedsLazyListItem.customName)
+        ,
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -70,31 +70,30 @@ fun AnimalItem(
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = { onItemClicked(breedWithImage) })
+                    .clickable(onClick = { onItemClicked(breed) })
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(breedWithImage.image.url)
+                        .data(breed.imageUrl)
                         .crossfade(true)
                         .build(),
-                    placeholder = painterResource(R.drawable.placeholder),
-                    contentDescription = breedWithImage.breed.description,
+                    placeholder = painterResource(R.mipmap.ic_place_holder_foreground),
+                    contentDescription = breed.description,
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier
                         .height(200.dp)
                         .fillMaxWidth()
-                        .background(Color.Red)
                         .clip(RoundedCornerShape(6.dp, 6.dp, 0.dp, 0.dp))
                 )
                 Text(
                     modifier = Modifier.padding(8.dp),
-                    text = breedWithImage.breed.name ?: "Sample one",
+                    text = breed.name ?: "Sample one",
                     style = MaterialTheme.typography.headlineMedium,
                     fontSize = 20.sp
                 )
                 Text(
                     modifier = Modifier.padding(8.dp),
-                    text = breedWithImage.breed.description ?: "Sample one",
+                    text = breed.description ?: "Sample one",
                     style = MaterialTheme.typography.headlineMedium,
                     fontSize = 16.sp,
                     maxLines = 4
@@ -107,21 +106,21 @@ fun AnimalItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { onRemoveFromCartClicked(breedWithImage) }) {
+                IconButton(onClick = { onRemoveFromCartClicked(breed) }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = null,
                     )
                 }
-                IconButton(onClick = { onAddToCartClicked(breedWithImage) }) {
+                IconButton(onClick = { onAddToCartClicked(breed) }) {
                     Icon(
                         imageVector = Icons.Default.ThumbUp,
                         contentDescription = null,
-                        tint = if (breedWithImage.breed.isAddedToCart) MaterialTheme.colorScheme.primary else Color.Gray
+                        tint = if (breed.isAddedToCart) MaterialTheme.colorScheme.primary else Color.Gray
                     )
                 }
                 CountBox(
-                    breedWithImage = breedWithImage,
+                    breed = breed,
                     onAddNumberOfOrderClicked = onAddNumberOfOrderClicked,
                     onRemoveNumberOfOrderClicked = onRemoveNumberOfOrderClicked
                 )
@@ -131,12 +130,12 @@ fun AnimalItem(
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(
-                    onClick = { onFavoriteClicked(breedWithImage) },
+                    onClick = { onFavoriteClicked(breed) },
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Favorite,
                         contentDescription = null,
-                        tint = if (breedWithImage.breed.isFavorite) Color.Red else Color.Gray
+                        tint = if (breed.isFavorite) Color.Red else Color.Gray
                     )
                 }
             }
@@ -151,16 +150,14 @@ fun AnimalItem(
 fun AnimalItemPreview() {
     AnimalAppTheme {
         AnimalItem(
-            breedWithImage = BreedWithImage(
-                breed = Breed(
-                    description = "some description",
-                    id = "",
-                    name = "name",
-                    isFavorite = false,
-                    numberOfOrders = 0,
-                    isAddedToCart = false
-                ),
-                image = Image(height = 0, id = "", url = "", width = 0),
+            Breed(
+                description = "some description",
+                id = "",
+                name = "name",
+                isFavorite = false,
+                numberOfOrders = 0,
+                isAddedToCart = false,
+                imageUrl = ""
             ),
             onItemClicked = {},
             onFavoriteClicked = {},

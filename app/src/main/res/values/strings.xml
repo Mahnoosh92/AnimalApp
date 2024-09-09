@@ -4,4 +4,6 @@
     <string name="search">Search</string>
     <string name="filter">Filter</string>
     <string name="detail">Detail</string>
+    <string name="default_text">Default text</string>
+    <string name="no_breeds_found">No breeds found</string>
 </resources>

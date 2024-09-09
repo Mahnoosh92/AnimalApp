@@ -21,16 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.animalapp.domain.model.Breed
-import com.example.animalapp.domain.model.BreedWithImage
-import com.example.animalapp.domain.model.Image
 import com.example.animalapp.ui.theme.AnimalAppTheme
 
 @Composable
 fun CountBox(
-    breedWithImage: BreedWithImage,
+    breed: Breed,
     modifier: Modifier = Modifier,
-    onAddNumberOfOrderClicked: (BreedWithImage) -> Unit,
-    onRemoveNumberOfOrderClicked: (BreedWithImage) -> Unit
+    onAddNumberOfOrderClicked: (Breed) -> Unit,
+    onRemoveNumberOfOrderClicked: (Breed) -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
@@ -47,11 +45,11 @@ fun CountBox(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = { onAddNumberOfOrderClicked(breedWithImage) }) {
+            IconButton(onClick = { onAddNumberOfOrderClicked(breed) }) {
                 Icon(imageVector = Icons.Default.AddCircle, contentDescription = null)
             }
-            Text(text = breedWithImage.breed.numberOfOrders.toString())
-            IconButton(onClick = { onRemoveNumberOfOrderClicked(breedWithImage) }) {
+            Text(text = breed.numberOfOrders.toString())
+            IconButton(onClick = { onRemoveNumberOfOrderClicked(breed) }) {
                 Icon(imageVector = Icons.Filled.Clear, contentDescription = null)
             }
         }
@@ -63,16 +61,14 @@ fun CountBox(
 fun CountBoxPreview() {
     AnimalAppTheme {
         CountBox(
-            breedWithImage = BreedWithImage(
-                breed = Breed(
-                    description = "some description",
-                    id = "",
-                    name = "name",
-                    isFavorite = false,
-                    numberOfOrders = 0,
-                    isAddedToCart = false
-                ),
-                image = Image(height = 0, id = "", url = "", width = 0),
+            breed = Breed(
+                description = "some description",
+                id = "",
+                name = "name",
+                isFavorite = false,
+                numberOfOrders = 0,
+                isAddedToCart = false,
+                imageUrl = ""
             ),
             onAddNumberOfOrderClicked = {},
             onRemoveNumberOfOrderClicked = {})

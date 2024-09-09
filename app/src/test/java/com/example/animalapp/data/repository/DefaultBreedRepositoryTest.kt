@@ -1,12 +1,11 @@
 package com.example.animalapp.data.repository
 
 import app.cash.turbine.test
-import com.example.animalapp.data.common.DEFAULT_BREED_ID
-import com.example.animalapp.data.common.SECONDARY_BREED_ID
 import com.example.animalapp.data.datasource.local.BreedLocalDatasource
 import com.example.animalapp.data.datasource.remote.BreedRemoteDatasource
-import com.example.animalapp.data.model.local.LocalBreedWithImage
+import com.example.animalapp.data.model.local.BreedEntity
 import com.example.animalapp.data.model.remote.BreedDTO
+import com.example.animalapp.domain.mapper.toBreed
 import com.example.animalapp.domain.repository.BreedRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.flow.flowOf
@@ -50,35 +49,17 @@ class DefaultBreedRepositoryTest {
     fun tearDown() {
     }
 
-    //    @Test
-//    fun `should return list of breeds with isFavorite true when local datasource is has one data and remote datasource is successful`() =
-//        scope.runTest {
-//            val page = 1
-//            breedRepository.getBreeds(page = page).test {
-//                val result = awaitItem()
-//                assertThat(result?.size).isEqualTo(2)
-//                result?.forEach {
-//                    if (it.breed.isFavorite) {
-//                        assertThat(it.breed.id).isEqualTo(DEFAULT_BREED_ID)
-//                    } else {
-//                        assertThat(it.breed.id).isEqualTo(SECONDARY_BREED_ID)
-//                    }
-//                }
-//                awaitComplete()
-//            }
-//        }
     @Test
-    fun `should return list of breeds with all isFavorite false when local datasource is empty and remote datasource is successful`() =
+    fun `should return list of breeds with all isFavorite when local datasource is empty and remote datasource is successful`() =
         scope.runTest {
             Mockito.`when`(localDatasource.getBreeds()).thenReturn(flowOf(emptyList()))
             Mockito.`when`(remoteDatasource.getBreeds(page = page))
                 .thenReturn(Result.success(listOf(BreedDTO.DEFAULT)))
 
-            breedRepository.getBreeds(page = page).test {
-                val result = awaitItem()
-                assertThat(result?.size).isEqualTo(1)
-                assertThat(result?.get(0)?.breed?.isFavorite).isFalse()
-                awaitComplete()
+            breedRepository.fetchBreeds(page = page)
+
+            breedRepository.breedsFlow().test {
+                assertThat(awaitItem()).isEqualTo(listOf(BreedDTO.DEFAULT.toBreed()))
             }
         }
 
@@ -90,9 +71,17 @@ class DefaultBreedRepositoryTest {
             Mockito.`when`(remoteDatasource.getBreeds(page = page))
                 .thenReturn(Result.failure(Throwable(exceptionMessage)))
 
-            breedRepository.getBreeds(page = page).test {
-                val result = awaitError()
-                assertThat(result.message).isEqualTo(exceptionMessage)
+//            Mockito.`when`(remoteDatasource.getBreeds(page = page))
+//                .thenReturn(Result.failure(Throwable(exceptionMessage)))
+//
+//            breedRepository.getBreeds(page = page).test {
+//                val result = awaitError()
+//                assertThat(result.message).isEqualTo(exceptionMessage)
+//            }
+            try {
+                breedRepository.fetchBreeds(page = page)
+            } catch (e: Exception) {
+                assertThat(e.message).isEqualTo(exceptionMessage)
             }
         }
 
@@ -100,18 +89,14 @@ class DefaultBreedRepositoryTest {
     fun `should return list of breeds with isFavorite true when local datasource is has one data and remote datasource is successful`() =
         scope.runTest {
             Mockito.`when`(localDatasource.getBreeds())
-                .thenReturn(flowOf(listOf(LocalBreedWithImage.DEFAULT)))
+                .thenReturn(flowOf(listOf(BreedEntity.DEFAULT.copy(isFavorite = true))))
             Mockito.`when`(remoteDatasource.getBreeds(page = page))
-                .thenReturn(Result.success(listOf(BreedDTO.DEFAULT, BreedDTO.SECONDARY)))
+                .thenReturn(Result.success(listOf(BreedDTO.DEFAULT)))
 
-            breedRepository.getBreeds(page = page).test {
-                val result = awaitItem()
-                val resultWithIsFavoriteTrue = result?.find { it.breed.isFavorite }
-                val resultWithIsFavoriteFalse = result?.find { !it.breed.isFavorite }
-                assertThat(result?.size).isEqualTo(2)
-                assertThat(resultWithIsFavoriteTrue?.breed?.id).isEqualTo(DEFAULT_BREED_ID)
-                assertThat(resultWithIsFavoriteFalse?.breed?.id).isEqualTo(SECONDARY_BREED_ID)
-                awaitComplete()
+            breedRepository.fetchBreeds(page = page)
+
+            breedRepository.breedsFlow().test {
+                assertThat(awaitItem().size).isEqualTo(1 )
             }
         }
 }

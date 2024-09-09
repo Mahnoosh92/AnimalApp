@@ -8,6 +8,7 @@ import javax.inject.Inject
 
 class DefaultBreedRemoteDatasource @Inject constructor(private val apiService: ApiService) :
     BreedRemoteDatasource {
+
     override suspend fun getBreeds(page: Int): Result<List<BreedDTO>> {
         val response = apiService.getBreeds(LIMIT, page)
         return if (response.isSuccessful)

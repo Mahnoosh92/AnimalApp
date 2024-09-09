@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 1,
-    "identityHash": "d1b703aca1a04a48b0cd9e720dd6a7b3",
+    "version": 2,
+    "identityHash": "f879a8414a9336dfdd5e8a4a9dd741c1",
     "entities": [
       {
         "tableName": "image_table",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `height` INTEGER, `url` TEXT, `breed_id` TEXT NOT NULL, `width` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`breed_id`) REFERENCES `breed_table`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `height` INTEGER, `url` TEXT, `breed_id` TEXT NOT NULL, `width` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -46,19 +46,7 @@
           ]
         },
         "indices": [],
-        "foreignKeys": [
-          {
-            "table": "breed_table",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "breed_id"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
+        "foreignKeys": []
       },
       {
         "tableName": "breed_table",
@@ -114,7 +102,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd1b703aca1a04a48b0cd9e720dd6a7b3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f879a8414a9336dfdd5e8a4a9dd741c1')"
     ]
   }
 }

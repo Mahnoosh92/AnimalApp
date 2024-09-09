@@ -4,7 +4,6 @@ import androidx.test.filters.MediumTest
 import app.cash.turbine.test
 import com.example.animalapp.data.db.AnimalDatabase
 import com.example.animalapp.data.model.local.BreedEntity
-import com.example.animalapp.data.model.local.ImageEntity
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -31,7 +30,6 @@ class BreedDaoTest {
     lateinit var database: AnimalDatabase
 
     private lateinit var breedDao: BreedDao
-    private lateinit var imageDao: ImageDao
 
     private val dispatcher = StandardTestDispatcher()
     private val scope = TestScope(dispatcher)
@@ -40,7 +38,6 @@ class BreedDaoTest {
     fun setUp() {
         hiltRule.inject()
         breedDao = database.BreedDao()
-        imageDao = database.ImageDao()
     }
 
     @After
@@ -50,23 +47,10 @@ class BreedDaoTest {
     @Test
     fun checkDataIsInsertedInBreedTableInDb() = scope.runTest {
         breedDao.insert(BreedEntity.DEFAULT)
-        imageDao.insert(ImageEntity.DEFAULT)
 
         breedDao.getBreedsWithImages().test {
             val result = awaitItem()
-            assertThat(result[0].breed).isEqualTo(BreedEntity.DEFAULT)
-            assertThat(result[0].image).isEqualTo(ImageEntity.DEFAULT)
-        }
-    }
-
-    @Test
-    fun checkDataIsRemovedFromImageWhenBreedIsRemoved() = scope.runTest {
-        breedDao.insert(BreedEntity.DEFAULT)
-        imageDao.insert(ImageEntity.DEFAULT)
-        breedDao.remove(BreedEntity.DEFAULT.id)
-
-        imageDao.getImages().test {
-            assertThat(awaitItem().size).isEqualTo(0)
+            assertThat(result).isEqualTo(listOf(BreedEntity.DEFAULT))
         }
     }
 }

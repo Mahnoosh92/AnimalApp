@@ -1,24 +1,26 @@
 package com.example.animalapp.data.datasource.local
 
 import com.example.animalapp.data.db.dao.BreedDao
-import com.example.animalapp.data.db.dao.ImageDao
 import com.example.animalapp.data.model.local.BreedEntity
-import com.example.animalapp.data.model.local.LocalBreedWithImage
-import com.example.animalapp.data.model.local.ImageEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class DefaultBreedLocalDatasource @Inject constructor(
-    private val breedDao: BreedDao,
-    private val imageDao: ImageDao
+    private val breedDao: BreedDao
 ) :
     BreedLocalDatasource {
-    override fun getBreeds(): Flow<List<LocalBreedWithImage>> = breedDao.getBreedsWithImages()
-
-    override suspend fun insert(breedEntity: BreedEntity, imageEntity: ImageEntity) {
+    override fun getBreeds(): Flow<List<BreedEntity>> = breedDao.getBreedsWithImages()
+    override suspend fun insertBreedEntity(breedEntity: BreedEntity) {
         breedDao.insert(breedEntity = breedEntity)
-        imageDao.insert(imageEntity = imageEntity)
     }
 
-    override suspend fun remove(breedId: String) = breedDao.remove(id = breedId)
+    override suspend fun insertAllBreedEntities(breedEntities: List<BreedEntity>) {
+        breedDao.insertAll(breedEntities = breedEntities)
+    }
+
+    override suspend fun update(breedId: String, isFavourite: Int) =
+        breedDao.update(id = breedId, isFavorite = isFavourite)
+
+    override suspend fun removeAll() = breedDao.removeAll()
+    override suspend fun remove(id: String) = breedDao.remove(id = id)
 }

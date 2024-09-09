@@ -27,7 +27,4 @@ object DatabaseModule {
     @Singleton
     fun provideBreedDao(@Named("app_db") db: AnimalDatabase) = db.BreedDao()
 
-    @Provides
-    @Singleton
-    fun provideImageDao(@Named("app_db") db: AnimalDatabase) = db.ImageDao()
 }

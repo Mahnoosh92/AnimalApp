@@ -3,15 +3,16 @@ package com.example.animalapp.data.repository
 import com.example.animalapp.data.datasource.local.BreedLocalDatasource
 import com.example.animalapp.data.datasource.remote.BreedRemoteDatasource
 import com.example.animalapp.data.di.IoDispatcher
+import com.example.animalapp.data.extensions.syncWithLocalBreeds
 import com.example.animalapp.data.model.local.BreedEntity
-import com.example.animalapp.data.model.local.ImageEntity
-import com.example.animalapp.domain.mapper.toBreedWithImage
-import com.example.animalapp.domain.model.BreedWithImage
+import com.example.animalapp.domain.mapper.toBreed
+import com.example.animalapp.domain.model.Breed
 import com.example.animalapp.domain.repository.BreedRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -19,52 +20,57 @@ import javax.inject.Inject
 class DefaultBreedRepository @Inject constructor(
     private val remoteDatasource: BreedRemoteDatasource,
     private val localDatasource: BreedLocalDatasource,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
-
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : BreedRepository {
 
-    private val mapOfLatestBreeds = mutableMapOf<Int, List<BreedWithImage>?>()
 
-    override fun getBreeds(page: Int): Flow<List<BreedWithImage>?> {
-        return localDatasource
-            .getBreeds()
-            .map { favouriteBreeds ->
-                if (mapOfLatestBreeds[page] == null) {
-                    val response = remoteDatasource.getBreeds(page = page)
-                    if (response.isSuccess) {
-                        mapOfLatestBreeds[page] =
-                            response.getOrNull()?.map { it.toBreedWithImage() }
-                    }
-                }
-                mapOfLatestBreeds[page]
-                    ?.map { breedWithImage ->
-                        if (
-                            favouriteBreeds.find {
-                                it.breed.id == breedWithImage.breed.id
-                            } != null) {
-                            breedWithImage.copy(breed = breedWithImage.breed.copy(isFavorite = true))
-                        } else {
-                            breedWithImage.copy(breed = breedWithImage.breed.copy(isFavorite = false))
-                        }
-                    }
-            }
-            .catch {
-                emptyList<BreedWithImage>()
-            }
-            .flowOn(ioDispatcher)
-    }
+    private val remoteBreedsFlow = MutableStateFlow<List<Breed>?>(emptyList())
 
-    override fun searchBreeds(breedName: String): Flow<List<BreedWithImage>?> = flow {
-        val response = remoteDatasource.searchBreeds(breedName = breedName)
-        if (response.isSuccess) {
-            emit(response.getOrNull()?.map { it.toBreedWithImage(isFavorite = false) })
+    override suspend fun fetchBreeds(page: Int) {
+        val result = remoteDatasource.getBreeds(page = page)
+        if (result.isSuccess) {
+            val breeds = result.getOrNull()?.map { it.toBreed() } ?: emptyList()
+            remoteBreedsFlow.value = (remoteBreedsFlow.value ?: emptyList<Breed>()) + breeds
         } else {
-            throw Exception(response.exceptionOrNull()?.message)
+            throw Exception(result.exceptionOrNull()?.message)
         }
     }
 
-    override suspend fun insert(breedEntity: BreedEntity, imageEntity: ImageEntity) =
-        localDatasource.insert(breedEntity = breedEntity, imageEntity = imageEntity)
+    override fun breedsFlow(): Flow<List<Breed>> = combine(
+        remoteBreedsFlow,
+        localDatasource.getBreeds()
+    ) { remoteBreeds, localBreeds ->
+        remoteBreeds?.syncWithLocalBreeds(localBreeds.map { it.toBreed() }) ?: emptyList()
+    }
+        .catch {
+            throw Exception(it.message)
+        }
+        .flowOn(ioDispatcher)
 
-    override suspend fun remove(breedId: String) = localDatasource.remove(breedId = breedId)
+    override fun searchBreeds(breedName: String): Flow<List<Breed>> = localDatasource.getBreeds()
+        .map { breedEntityList ->
+            val response = remoteDatasource.searchBreeds(breedName = breedName)
+            if (response.isSuccess) {
+                response.getOrNull()?.map { it.toBreed() }
+                    ?.syncWithLocalBreeds(breedEntityList.map { it.toBreed() }) ?: emptyList()
+            } else {
+                throw Exception(response.exceptionOrNull()?.message)
+            }
+        }
+
+
+    override suspend fun insertBreedEntity(breedEntity: BreedEntity) {
+        localDatasource.insertBreedEntity(breedEntity = breedEntity)
+    }
+
+    override suspend fun insertAllBreedEntities(breedEntities: List<BreedEntity>) {
+        localDatasource.insertAllBreedEntities(breedEntities = breedEntities)
+    }
+
+    override suspend fun update(breedId: String, isFavourite: Int) =
+        localDatasource.update(breedId = breedId, isFavourite = isFavourite)
+
+    override suspend fun removeAll() = localDatasource.removeAll()
+    override suspend fun remove(id: String) = localDatasource.remove(id = id)
+
 }

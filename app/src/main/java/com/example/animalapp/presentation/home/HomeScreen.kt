@@ -1,7 +1,9 @@
 package com.example.animalapp.presentation.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,18 +23,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.animalapp.domain.model.BreedWithImage
+import com.example.animalapp.data.common.UiConstants
+import com.example.animalapp.domain.model.Breed
 import com.example.animalapp.presentation.component.AnimalItem
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
     onErrorReceived: (String) -> Unit,
-    onItemClicked: (BreedWithImage) -> Unit
+    onItemClicked: (Breed) -> Unit
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -57,20 +62,28 @@ fun HomeScreen(
             .padding(10.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = uiState.numberOfItemsInCart.toString(), textAlign = TextAlign.End
-            )
-            if (uiState.isLoading && (uiState.breeds?.size == 0 || uiState.breeds == null)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Text(
+                    text = uiState.numberOfItemsInCart.toString(), textAlign = TextAlign.End
+                )
+                Button(onClick = { viewModel.onEvent(HomeUiEvent.SaveChangedBreedsWithImage) }) {
+                    Text(text = "Save")
+                }
+            }
+            if (uiState.isLoading && (uiState.breeds.isEmpty())) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(modifier = Modifier.testTag(UiConstants.UiTags.ProgressIndicator.customName))
                 }
             }
-            uiState.breeds?.let { breeds ->
+            uiState.breeds.let { breeds ->
                 if (breeds.isNotEmpty() && !uiState.isLoading)
                     homeMainList(
                         breeds = breeds,
@@ -101,20 +114,20 @@ fun HomeScreen(
 
 @Composable
 fun homeMainList(
-    breeds: List<BreedWithImage>,
+    breeds: List<Breed>,
     lazyListState: LazyListState,
     modifier: Modifier = Modifier,
-    onItemClicked: (BreedWithImage) -> Unit,
-    onFavoriteClicked: (BreedWithImage) -> Unit,
-    onAddNumberOfOrderClicked: (BreedWithImage) -> Unit,
-    onRemoveNumberOfOrderClicked: (BreedWithImage) -> Unit,
-    onAddToCartClicked: (BreedWithImage) -> Unit,
-    onRemoveFromCartClicked: (BreedWithImage) -> Unit,
+    onItemClicked: (Breed) -> Unit,
+    onFavoriteClicked: (Breed) -> Unit,
+    onAddNumberOfOrderClicked: (Breed) -> Unit,
+    onRemoveNumberOfOrderClicked: (Breed) -> Unit,
+    onAddToCartClicked: (Breed) -> Unit,
+    onRemoveFromCartClicked: (Breed) -> Unit,
 ) {
-    LazyColumn(state = lazyListState, modifier = modifier.fillMaxWidth()) {
-        items(breeds, key = { it.breed.id }) { breed ->
+    LazyColumn(state = lazyListState, modifier = modifier.fillMaxWidth().testTag(UiConstants.UiTags.BreedsLazyList.customName)) {
+        items(breeds, key = { it.id }) { breed ->
             AnimalItem(
-                breedWithImage = breed,
+                breed = breed,
                 onItemClicked = { onItemClicked(breed) },
                 onFavoriteClicked = { onFavoriteClicked(breed) },
                 onAddNumberOfOrderClicked = { onAddNumberOfOrderClicked(breed) },

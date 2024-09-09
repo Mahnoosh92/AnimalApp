@@ -3,14 +3,14 @@ package com.example.animalapp.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.animalapp.data.di.MainDispatcher
-import com.example.animalapp.domain.mapper.toBreedEntityAndImageEntity
-import com.example.animalapp.domain.model.BreedWithImage
+import com.example.animalapp.domain.mapper.toBreedEntity
+import com.example.animalapp.domain.model.Breed
 import com.example.animalapp.domain.repository.BreedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,9 +22,16 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
+
     val uiState = _uiState.asStateFlow()
 
     private var page = 0
+
+    private val handler = CoroutineExceptionHandler { _, exception ->
+        _uiState.update { oldUiState ->
+            oldUiState.copy(error = exception.message, isLoading = false)
+        }
+    }
 
     init {
         loadBreeds()
@@ -37,50 +44,64 @@ class HomeViewModel @Inject constructor(
             }
 
             is HomeUiEvent.OnAddNumberOfOrdersClicked -> {
-                addNumberOfOrders(event.breedWithImage)
+                addNumberOfOrders(event.breed)
             }
 
             is HomeUiEvent.OnRemoveNumberOfOrdersClicked -> {
-                removeNumberOfOrders(event.breedWithImage)
+                removeNumberOfOrders(event.breed)
             }
 
             is HomeUiEvent.OnAddToCartClicked -> {
-                addToCart(event.breedWithImage)
+                addToCart(event.breed)
             }
 
             is HomeUiEvent.OnRemoveFromCartClicked -> {
-                removeFromCart(event.breedWithImage)
+                removeFromCart(event.breed)
             }
 
             is HomeUiEvent.OnFavouriteClicked -> {
-                toggleFavouriteStatus(event.breedWithImage)
+                toggleFavouriteStatus(event.breed)
+            }
+
+            is HomeUiEvent.SaveChangedBreedsWithImage -> {
+                removeAllZeroFlagsBreeds()
+                saveChangedBreeds()
+            }
+        }
+    }
+
+    private fun saveChangedBreeds() {
+        viewModelScope.launch(mainDispatcher + handler) {
+            val anyBreedsWithFilledFlags =
+                _uiState.value.breeds
+                    ?.filter { it.isAddedToCart || it.isFavorite || it.numberOfOrders > 0 }
+                    ?.map { it.toBreedEntity() }
+            anyBreedsWithFilledFlags?.let {
+                breedRepository.insertAllBreedEntities(it)
+            }
+        }
+    }
+
+    private fun removeAllZeroFlagsBreeds() {
+        viewModelScope.launch(mainDispatcher + handler) {
+            val allZeroFlagsBreeds =
+                _uiState.value.breeds.filter { !it.isAddedToCart && !it.isFavorite && it.numberOfOrders == 0 }
+            allZeroFlagsBreeds.forEach {
+                breedRepository.remove(it.id)
             }
         }
     }
 
     private fun loadBreeds() {
-        viewModelScope.launch(mainDispatcher) {
-            breedRepository.getBreeds(page = page)
+        viewModelScope.launch(mainDispatcher + handler) {
+            breedRepository.fetchBreeds(page = 0)
+            breedRepository.breedsFlow()
                 .collect { breeds ->
-                    breeds?.let { notNullRemoteBreeds ->
-                        _uiState.update { oldUiState ->
-                            oldUiState.copy(
-                                breeds =
-                                oldUiState.breeds?.let { notNullOldBreeds ->
-                                    notNullRemoteBreeds
-                                        .map { breed ->
-                                            val oldBreed =
-                                                notNullOldBreeds.find { it.breed.id == breed.breed.id }
-                                            oldBreed?.let {
-                                                oldBreed.copy(breed = oldBreed.breed.copy(isFavorite = breed.breed.isFavorite))
-                                            } ?: run {
-                                                breed
-                                            }
-                                        }
-                                } ?: run { notNullRemoteBreeds },
-                                isLoading = false
-                            )
-                        }
+                    _uiState.update { oldUiState ->
+                        oldUiState.copy(
+                            breeds = breeds,
+                            isLoading = false
+                        )
                     }
                 }
         }
@@ -88,99 +109,95 @@ class HomeViewModel @Inject constructor(
 
     private fun loadMoreBreeds() {
         page += 1
-        viewModelScope.launch(mainDispatcher) {
-            breedRepository.getBreeds(page = page)
-                .catch {
+        viewModelScope.launch(mainDispatcher + handler) {
+            breedRepository.fetchBreeds(page = page)
+        }
+    }
 
+    private fun addNumberOfOrders(selectedBreed: Breed) {
+        _uiState.update { oldUiState ->
+            oldUiState.copy(
+                breeds = oldUiState
+                    .breeds
+                    .map { breed ->
+                        if (breed.id == selectedBreed.id)
+                            breed.copy(numberOfOrders = breed.numberOfOrders + 1)
+                        else
+                            breed
+                    }
+            )
+        }
+    }
+
+    private fun removeNumberOfOrders(selectedBreed: Breed) {
+        _uiState.update { oldUiState ->
+            oldUiState.copy(
+                breeds = oldUiState
+                    .breeds
+                    .map { breed ->
+                        if (breed.id == selectedBreed.id)
+                            if (breed.numberOfOrders > 0)
+                                breed.copy(numberOfOrders = breed.numberOfOrders - 1)
+                            else
+                                breed
+                        else
+                            breed
+                    }
+            )
+        }
+    }
+
+    private fun addToCart(selectedBreed: Breed) {
+        _uiState.update { oldUiState ->
+            val newBreeds = oldUiState
+                .breeds
+                .map { breed ->
+                    if (breed.id == selectedBreed.id)
+                        if (!breed.isAddedToCart)
+                            breed.copy(isAddedToCart = true)
+                        else
+                            breed
+                    else
+                        breed
                 }
-                .collect { breeds ->
-                    _uiState.update { oldUiState ->
-                        val mutableList = oldUiState.breeds?.toMutableList()
-                        mutableList?.addAll(breeds?.toMutableList() ?: emptyList())
-                        oldUiState.copy(breeds = mutableList, isLoading = false)
-                    }
+            oldUiState.copy(
+                breeds = newBreeds,
+                numberOfItemsInCart = newBreeds?.filter { it.isAddedToCart }?.size ?: 0
+            )
+        }
+    }
+
+    private fun removeFromCart(selectedBreed: Breed) {
+        _uiState.update { oldUiState ->
+            val newBreeds = oldUiState
+                .breeds
+                .map { breed ->
+                    if (breed.id == selectedBreed.id)
+                        if (breed.isAddedToCart)
+                            breed.copy(isAddedToCart = false)
+                        else
+                            breed
+                    else
+                        breed
                 }
-        }
-    }
-
-    private fun addNumberOfOrders(breedWithImage: BreedWithImage) {
-        _uiState.update { oldUiState ->
             oldUiState.copy(
-                breeds = oldUiState
-                    .breeds
-                    ?.map { breed ->
-                        if (breed.breed.id == breedWithImage.breed.id)
-                            breed.copy(breed = breedWithImage.breed.copy(numberOfOrders = breedWithImage.breed.numberOfOrders + 1))
-                        else
-                            breed
-                    }
+                breeds = newBreeds,
+                numberOfItemsInCart = newBreeds?.filter { it.isAddedToCart }?.size ?: 0
             )
         }
     }
 
-    private fun removeNumberOfOrders(breedWithImage: BreedWithImage) {
-        _uiState.update { oldUiState ->
-            oldUiState.copy(
-                breeds = oldUiState
-                    .breeds
-                    ?.map { breed ->
-                        if (breed.breed.id == breedWithImage.breed.id)
-                            if (breedWithImage.breed.numberOfOrders > 0)
-                                breed.copy(breed = breedWithImage.breed.copy(numberOfOrders = breedWithImage.breed.numberOfOrders - 1))
-                            else
-                                breed
-                        else
-                            breed
-                    }
-            )
-        }
-    }
+    private fun toggleFavouriteStatus(selectedBreed: Breed) {
+        viewModelScope.launch(mainDispatcher + handler) {
+            if (selectedBreed.isFavorite) {
+                breedRepository.update(breedId = selectedBreed.id, isFavourite = 0)
+            } else {
+                breedRepository.insertBreedEntity(
+                    breedEntity = selectedBreed.toBreedEntity().copy(
+                        isFavorite = true
+                    )
+                )
 
-    private fun addToCart(breedWithImage: BreedWithImage) {
-        _uiState.update { oldUiState ->
-            oldUiState.copy(
-                breeds = oldUiState
-                    .breeds
-                    ?.map { breed ->
-                        if (breed.breed.id == breedWithImage.breed.id)
-                            if (!breed.breed.isAddedToCart)
-                                breed.copy(breed = breedWithImage.breed.copy(isAddedToCart = true))
-                            else
-                                breed
-                        else
-                            breed
-                    },
-                numberOfItemsInCart = oldUiState.numberOfItemsInCart + 1
-            )
-        }
-    }
-
-    private fun removeFromCart(breedWithImage: BreedWithImage) {
-        _uiState.update { oldUiState ->
-            oldUiState.copy(
-                breeds = oldUiState
-                    .breeds
-                    ?.map { breed ->
-                        if (breed.breed.id == breedWithImage.breed.id)
-                            if (breedWithImage.breed.isAddedToCart)
-                                breed.copy(breed = breedWithImage.breed.copy(isAddedToCart = false))
-                            else
-                                breed
-                        else
-                            breed
-                    },
-                numberOfItemsInCart = if (oldUiState.numberOfItemsInCart > 0) oldUiState.numberOfItemsInCart - 1 else oldUiState.numberOfItemsInCart
-            )
-        }
-    }
-
-    private fun toggleFavouriteStatus(breedWithImage: BreedWithImage) {
-        viewModelScope.launch(mainDispatcher) {
-            if (breedWithImage.breed.isFavorite)
-                breedRepository.remove(breedId = breedWithImage.breed.id)
-            else {
-                val (imageEntity, breedEntity) = breedWithImage.toBreedEntityAndImageEntity()
-                breedRepository.insert(imageEntity = imageEntity, breedEntity = breedEntity)
             }
         }
     }

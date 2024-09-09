@@ -2,9 +2,14 @@ package com.example.animalapp.presentation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
+import com.example.animalapp.data.extensions.extractName
 import com.example.animalapp.presentation.component.AnimalAppBottomBar
 import com.example.animalapp.presentation.component.AnimalAppTopBar
 import com.example.animalapp.presentation.detail.navigation.detail
@@ -12,12 +17,14 @@ import com.example.animalapp.presentation.filter.navigation.filter
 import com.example.animalapp.presentation.home.navigation.HOME_ROUTE
 import com.example.animalapp.presentation.home.navigation.home
 import com.example.animalapp.presentation.search.navigation.search
+import kotlinx.coroutines.launch
 
 @Composable
 fun AnimalAppGraph(
     state: AnimalAppState,
     modifier: Modifier = Modifier
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         topBar = {
             AnimalAppTopBar(
@@ -38,7 +45,9 @@ fun AnimalAppGraph(
                     }
                 }
         },
-        snackbarHost = {}
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
     ) { paddings ->
         NavHost(
             navController = state.navController,
@@ -46,9 +55,19 @@ fun AnimalAppGraph(
             modifier = modifier.padding(paddings)
         ) {
             home(
-                onErrorReceived = {},
-                onItemClicked = {})
-            search()
+                onErrorReceived = { error ->
+                    state.coroutineScope.launch {
+                        snackbarHostState.showSnackbar(message = error)
+                    }
+                },
+                onItemClicked = { breed ->
+                    state.navController.navigate("detail/${breed.name}/${breed.description}/${breed.extractName()}")
+                })
+            search() {
+                state.coroutineScope.launch {
+                    snackbarHostState.showSnackbar(message = it)
+                }
+            }
             filter()
             detail()
         }

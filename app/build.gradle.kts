@@ -59,8 +59,23 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    sourceSets {
+        getByName("main") {
+            assets {
+                srcDirs("src/main/assets", "src/assets")
+            }
+        }
+        getByName("debug") {
+            assets {
+                srcDirs("src/debug/assets")
+            }
+        }
+    }
     room {
         schemaDirectory("$projectDir/schemas")
+    }
+    sourceSets.getByName("androidTest") {
+        assets.srcDirs("src/debug/assets")
     }
 }
 
@@ -118,7 +133,8 @@ dependencies {
     androidTestImplementation(libs.turbine)
     androidTestImplementation(libs.hilt.android.testing)
     kaptAndroidTest(libs.hilt.android.compiler)
-
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
+    androidTestImplementation ("androidx.navigation:navigation-testing:2.8.0")
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
