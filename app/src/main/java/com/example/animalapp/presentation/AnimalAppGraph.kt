@@ -55,11 +55,7 @@ fun AnimalAppGraph(
             modifier = modifier.padding(paddings)
         ) {
             home(
-                onErrorReceived = { error ->
-                    state.coroutineScope.launch {
-                        snackbarHostState.showSnackbar(message = error)
-                    }
-                },
+                snackbarHostState = snackbarHostState,
                 onItemClicked = { breed ->
                     state.navController.navigate("detail/${breed.name}/${breed.description}/${breed.extractName()}")
                 })

@@ -201,4 +201,10 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+    fun consumeError(){
+        _uiState.update { oldUiState ->
+            oldUiState.copy(error = null)
+        }
+
+    }
 }

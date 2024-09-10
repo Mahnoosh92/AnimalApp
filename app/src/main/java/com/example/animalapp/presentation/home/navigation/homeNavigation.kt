@@ -1,5 +1,6 @@
 package com.example.animalapp.presentation.home.navigation
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.animalapp.domain.model.Breed
@@ -8,12 +9,12 @@ import com.example.animalapp.presentation.home.HomeScreen
 const val HOME_ROUTE = "home"
 
 fun NavGraphBuilder.home(
-    onErrorReceived: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     onItemClicked: (Breed) -> Unit
 ) {
     composable(HOME_ROUTE) {
         HomeScreen(
-            onErrorReceived = onErrorReceived,
+            snackbarHostState = snackbarHostState,
             onItemClicked = onItemClicked
         )
     }

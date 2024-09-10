@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -30,19 +32,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.animalapp.data.common.UiConstants
 import com.example.animalapp.domain.model.Breed
 import com.example.animalapp.presentation.component.AnimalItem
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
-    onErrorReceived: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     onItemClicked: (Breed) -> Unit
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
-
+    val scope = rememberCoroutineScope()
     uiState.error?.let {
-        onErrorReceived(it)
+        scope.launch {
+            snackbarHostState.showSnackbar(message = it)
+            viewModel.consumeError()
+        }
+
     }
     val lazyListState = rememberLazyListState()
 
@@ -124,7 +131,9 @@ fun homeMainList(
     onAddToCartClicked: (Breed) -> Unit,
     onRemoveFromCartClicked: (Breed) -> Unit,
 ) {
-    LazyColumn(state = lazyListState, modifier = modifier.fillMaxWidth().testTag(UiConstants.UiTags.BreedsLazyList.customName)) {
+    LazyColumn(state = lazyListState, modifier = modifier
+        .fillMaxWidth()
+        .testTag(UiConstants.UiTags.BreedsLazyList.customName)) {
         items(breeds, key = { it.id }) { breed ->
             AnimalItem(
                 breed = breed,
