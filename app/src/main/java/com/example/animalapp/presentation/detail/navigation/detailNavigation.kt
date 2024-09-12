@@ -9,7 +9,7 @@ import com.example.animalapp.presentation.detail.DetailScreen
 
 const val DETAIL_ROUTE = "detail/{name}/{description}/{imageUrl}"
 
-fun NavGraphBuilder.detail(modifier: Modifier = Modifier) {
+fun NavGraphBuilder.detail() {
     composable(
         DETAIL_ROUTE,
         arguments = listOf(
@@ -24,8 +24,7 @@ fun NavGraphBuilder.detail(modifier: Modifier = Modifier) {
         DetailScreen(
             name = name,
             description = description,
-            imageUrl = imageUrl,
-            modifier = modifier
+            imageUrl = imageUrl
         )
     }
 

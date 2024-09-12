@@ -24,7 +24,7 @@ interface BreedDao {
     suspend fun insertAll(breedEntities: List<BreedEntity>)
 
     @Query("UPDATE breed_table SET isFavorite = :isFavorite WHERE id = :id")
-    suspend fun update(id: String, isFavorite: Int)
+    suspend fun update(id: String, isFavorite: Boolean)
 
     @Query("DELETE FROM breed_table")
     suspend fun removeAll()

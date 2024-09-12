@@ -1,6 +1,7 @@
 package com.example.animalapp.data.db.dao
 
 import androidx.test.filters.MediumTest
+import androidx.test.platform.app.InstrumentationRegistry
 import app.cash.turbine.test
 import com.example.animalapp.data.db.AnimalDatabase
 import com.example.animalapp.data.model.local.BreedEntity

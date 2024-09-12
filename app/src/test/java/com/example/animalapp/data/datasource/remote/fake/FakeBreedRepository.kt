@@ -1,4 +1,4 @@
-package com.example.animalapp.presentation.home.fake
+package com.example.animalapp.data.datasource.remote.fake
 
 import com.example.animalapp.data.model.local.BreedEntity
 import com.example.animalapp.data.model.remote.BreedDTO
@@ -10,24 +10,19 @@ import kotlinx.coroutines.flow.flowOf
 
 class FakeBreedRepository : BreedRepository {
 
-    private val breedEntities = mutableListOf<BreedEntity>()
-    val breedsFlowList =
-        listOf(BreedDTO.DEFAULT.toBreed(), BreedDTO.SECONDARY.toBreed().copy(numberOfOrders = 2))
-    val searchBreedsFlowList =
-        listOf(BreedDTO.DEFAULT.toBreed(), BreedDTO.SECONDARY.toBreed().copy(numberOfOrders = 2))
+    private var breedEntities = mutableListOf<BreedEntity>()
+
+    override suspend fun fetchBreeds(page: Int) {
+        /*NO_OP*/
+    }
 
     fun getBreedEntities() = breedEntities.toList()
 
-    override suspend fun fetchBreeds(page: Int) {
-
-    }
-
-    override fun breedsFlow(): Flow<List<Breed>> {
-        return flowOf(breedsFlowList)
-    }
+    override fun breedsFlow(): Flow<List<Breed>> =
+        flowOf(listOf(Breed.DEFAULT, Breed.SECONDARY))
 
     override fun searchBreeds(breedName: String): Flow<List<Breed>> {
-        return flowOf(searchBreedsFlowList)
+        return flowOf(listOf(BreedDTO.DEFAULT.toBreed()))
     }
 
     override suspend fun insertBreedEntity(breedEntity: BreedEntity) {
@@ -38,14 +33,14 @@ class FakeBreedRepository : BreedRepository {
         this.breedEntities.addAll(breedEntities)
     }
 
-    override suspend fun update(breedId: String, isFavourite: Int) {
-        breedEntities
+    override suspend fun update(breedId: String, isFavourite: Boolean) {
+        breedEntities = breedEntities
             .map {
                 if (it.id == breedId)
-                    it.copy(isFavorite = if (isFavourite == 0) true else false)
+                    it.copy(isFavorite = isFavourite)
                 else
                     it
-            }
+            }.toMutableList()
     }
 
     override suspend fun removeAll() {
@@ -54,5 +49,15 @@ class FakeBreedRepository : BreedRepository {
 
     override suspend fun remove(id: String) {
         breedEntities.removeIf { it.id == id }
+    }
+
+    override suspend fun filterBreedsWithoutSync(page: Int): List<Breed> =
+        listOf(Breed.DEFAULT)
+
+    override fun filterBreedsWithSync(page: Int): Flow<List<Breed>> =
+        flowOf(listOf(Breed.DEFAULT))
+
+    override suspend fun fetchFilterBreeds(page: Int) {
+        /*NO_OP*/
     }
 }

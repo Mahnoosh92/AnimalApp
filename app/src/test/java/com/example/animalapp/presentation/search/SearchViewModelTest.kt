@@ -1,7 +1,9 @@
 package com.example.animalapp.presentation.search
 
 import app.cash.turbine.test
-import com.example.animalapp.presentation.home.fake.FakeBreedRepository
+import com.example.animalapp.data.datasource.remote.fake.FakeBreedRepository
+import com.example.animalapp.data.model.remote.BreedDTO
+import com.example.animalapp.domain.mapper.toBreed
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -30,11 +32,16 @@ class SearchViewModelTest {
         val query = "sample"
 
         searchViewModel.onSearchValueChanged(query)
-
-        advanceUntilIdle()
+        dispatcher.scheduler.advanceUntilIdle()
         searchViewModel.uiState.test {
-            val expectedBreeds = awaitItem().breeds
-            assertThat(expectedBreeds).isEqualTo(breedRepository.searchBreedsFlowList)
+            assertThat(awaitItem()).isEqualTo(
+                SearchUiState(
+                    breeds = listOf(BreedDTO.DEFAULT.toBreed()),
+                    error = null,
+                    isLoading = false
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
         }
     }
 }

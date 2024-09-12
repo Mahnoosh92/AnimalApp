@@ -18,7 +18,7 @@ class DefaultBreedLocalDatasource @Inject constructor(
         breedDao.insertAll(breedEntities = breedEntities)
     }
 
-    override suspend fun update(breedId: String, isFavourite: Int) =
+    override suspend fun update(breedId: String, isFavourite: Boolean) =
         breedDao.update(id = breedId, isFavorite = isFavourite)
 
     override suspend fun removeAll() = breedDao.removeAll()

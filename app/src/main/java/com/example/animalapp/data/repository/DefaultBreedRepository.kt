@@ -25,6 +25,7 @@ class DefaultBreedRepository @Inject constructor(
 
 
     private val remoteBreedsFlow = MutableStateFlow<List<Breed>?>(emptyList())
+    private val remoteFilterBreedsFlow = MutableStateFlow<List<Breed>?>(emptyList())
 
     override suspend fun fetchBreeds(page: Int) {
         val result = remoteDatasource.getBreeds(page = page)
@@ -67,10 +68,38 @@ class DefaultBreedRepository @Inject constructor(
         localDatasource.insertAllBreedEntities(breedEntities = breedEntities)
     }
 
-    override suspend fun update(breedId: String, isFavourite: Int) =
+    override suspend fun update(breedId: String, isFavourite: Boolean) =
         localDatasource.update(breedId = breedId, isFavourite = isFavourite)
 
     override suspend fun removeAll() = localDatasource.removeAll()
     override suspend fun remove(id: String) = localDatasource.remove(id = id)
+    override suspend fun filterBreedsWithoutSync(page: Int): List<Breed> {
+        val response = remoteDatasource.getBreeds(page = page)
+        if (response.isSuccess) {
+            return response.getOrNull()?.map { it.toBreed() } ?: emptyList<Breed>()
+        } else {
+            throw Exception(response.exceptionOrNull()?.message)
+        }
+    }
+
+    override fun filterBreedsWithSync(page: Int): Flow<List<Breed>> = combine(
+        localDatasource.getBreeds(),
+        remoteFilterBreedsFlow
+    ) { localBreeds, remoteBreeds ->
+        remoteBreeds?.map { breed ->
+            val localBreed = localBreeds.find { it.id == breed.id }
+            localBreed?.toBreed() ?: breed
+        } ?: emptyList()
+    }
+
+    override suspend fun fetchFilterBreeds(page: Int) {
+        val result = remoteDatasource.getBreeds(page = page)
+        if (result.isSuccess) {
+            val breeds = result.getOrNull()?.map { it.toBreed() } ?: emptyList()
+            remoteFilterBreedsFlow.value = (remoteBreedsFlow.value ?: emptyList<Breed>()) + breeds
+        } else {
+            throw Exception(result.exceptionOrNull()?.message)
+        }
+    }
 
 }

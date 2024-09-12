@@ -1,10 +1,11 @@
 package com.example.animalapp.presentation.home
 
 import app.cash.turbine.test
+import com.example.animalapp.data.datasource.remote.fake.FakeBreedRepository
 import com.example.animalapp.data.model.remote.BreedDTO
 import com.example.animalapp.domain.mapper.toBreed
 import com.example.animalapp.domain.mapper.toBreedEntity
-import com.example.animalapp.presentation.home.fake.FakeBreedRepository
+import com.example.animalapp.domain.model.Breed
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -14,7 +15,6 @@ import org.junit.Before
 import org.junit.Test
 
 class HomeViewModelTest {
-
 
     private val breedRepository = FakeBreedRepository()
 
@@ -33,7 +33,9 @@ class HomeViewModelTest {
     @Test
     fun `should call update function when isFavourite is true and favourite button is clicked`() =
         scope.runTest {
-            breedRepository.insertBreedEntity(BreedDTO.DEFAULT.toBreed().toBreedEntity())
+            breedRepository.insertBreedEntity(
+                BreedDTO.DEFAULT.toBreed().toBreedEntity().copy(isFavorite = true)
+            )
 
             viewModel.onEvent(
                 HomeUiEvent.OnFavouriteClicked(
@@ -69,15 +71,17 @@ class HomeViewModelTest {
 
             viewModel.onEvent(
                 HomeUiEvent.OnAddNumberOfOrdersClicked(
-                    BreedDTO.DEFAULT.toBreed()
+                    Breed.DEFAULT
                 )
             )
 
-            advanceUntilIdle()
             viewModel.uiState.test {
-                val item = awaitItem().breeds.find { it.id == BreedDTO.DEFAULT.id }
-                assertThat(item?.numberOfOrders).isEqualTo(1)
+                val selectedItemNumberOfOrders =
+                    awaitItem().breeds.find { it.id == Breed.DEFAULT.id }?.numberOfOrders ?: -1
+                assertThat(selectedItemNumberOfOrders).isEqualTo(Breed.DEFAULT.numberOfOrders + 1)
+                cancelAndIgnoreRemainingEvents()
             }
+
         }
 
     @Test
@@ -86,14 +90,15 @@ class HomeViewModelTest {
 
             viewModel.onEvent(
                 HomeUiEvent.OnRemoveNumberOfOrdersClicked(
-                    BreedDTO.SECONDARY.toBreed()
+                    Breed.DEFAULT
                 )
             )
-
-            advanceUntilIdle()
+            dispatcher.scheduler.advanceUntilIdle()
             viewModel.uiState.test {
-                val item = awaitItem().breeds.find { it.id == BreedDTO.SECONDARY.id }
-                assertThat(item?.numberOfOrders).isEqualTo(1)
+                val selectedItemNumberOfOrders =
+                    awaitItem().breeds.find { it.id == Breed.DEFAULT.id }?.numberOfOrders ?: -1
+                assertThat(selectedItemNumberOfOrders).isEqualTo(Breed.DEFAULT.numberOfOrders - 1)
+                cancelAndIgnoreRemainingEvents()
             }
         }
 }

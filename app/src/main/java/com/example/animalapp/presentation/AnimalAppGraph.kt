@@ -64,7 +64,7 @@ fun AnimalAppGraph(
                     snackbarHostState.showSnackbar(message = it)
                 }
             }
-            filter()
+            filter(snackbarHostState = snackbarHostState)
             detail()
         }
     }

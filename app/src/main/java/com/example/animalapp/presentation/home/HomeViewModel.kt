@@ -11,6 +11,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,6 +23,7 @@ class HomeViewModel @Inject constructor(
     private val breedRepository: BreedRepository,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel() {
+
 
     private val _uiState = MutableStateFlow(HomeUiState())
 
@@ -96,7 +100,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch(mainDispatcher + handler) {
             breedRepository.fetchBreeds(page = 0)
             breedRepository.breedsFlow()
-                .collect { breeds ->
+                .onEach { breeds ->
                     _uiState.update { oldUiState ->
                         oldUiState.copy(
                             breeds = breeds,
@@ -104,6 +108,10 @@ class HomeViewModel @Inject constructor(
                         )
                     }
                 }
+                .catch {
+                    throw it
+                }
+                .collect()
         }
     }
 
@@ -190,7 +198,7 @@ class HomeViewModel @Inject constructor(
     private fun toggleFavouriteStatus(selectedBreed: Breed) {
         viewModelScope.launch(mainDispatcher + handler) {
             if (selectedBreed.isFavorite) {
-                breedRepository.update(breedId = selectedBreed.id, isFavourite = 0)
+                breedRepository.update(breedId = selectedBreed.id, isFavourite = false)
             } else {
                 breedRepository.insertBreedEntity(
                     breedEntity = selectedBreed.toBreedEntity().copy(
@@ -201,7 +209,8 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-    fun consumeError(){
+
+    fun consumeError() {
         _uiState.update { oldUiState ->
             oldUiState.copy(error = null)
         }
